@@ -13,6 +13,8 @@ import { ArrowUp, Loader2, RotateCcw, Stars } from 'lucide-react'
 
 import { cn } from 'utils'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
 const PreventEmptyParagraphs = Extension.create({
 	name: 'preventEmptyParagraphs',
 
@@ -88,7 +90,7 @@ const AIChatInterface = () => {
 		editor?.commands.setContent('')
 
 		try {
-			const res = await fetch('http://0.0.0.0:5001/ai', {
+			const res = await fetch(`${API_URL}/ai`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
