@@ -148,7 +148,7 @@ const AIChatInterface = () => {
 		<>
 			<div
 				ref={chatContainerRef}
-				className='flex-grow overflow-y-auto space-y-4 rounded-xl mb-4'
+				className='flex-grow overflow-y-auto space-y-4 rounded-xl mb-2'
 			>
 				{messages.map((message, index) => (
 					<div
@@ -214,7 +214,7 @@ const AIChatInterface = () => {
 				`}</style>
 
 				<div className='flex justify-end items-center gap-2 z-50'>
-					{!isDisabled && isStreaming && (
+					{!isDisabled && !isStreaming && (
 						<Button
 							type='button'
 							size='icon'
