@@ -225,8 +225,10 @@ const AIChatInterface = () => {
 				</div>
 			</form>
 
-			{error && <p className='text-sm text-red-500 mt-2'>{error}</p>}
-			<p className='text-xs text-muted-foreground mt-2 text-center'>
+			{error && (
+				<p className='text-sm text-center text-red-500 mt-2'>{error}</p>
+			)}
+			<p className='text-xs text-center text-muted-foreground mt-2'>
 				<span className='text-gradient'>WEDEVX AI</span> may make mistakes.
 				Please use with discretion.
 			</p>
