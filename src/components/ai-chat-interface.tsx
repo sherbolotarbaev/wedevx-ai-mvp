@@ -50,6 +50,7 @@ const AIChatInterface = () => {
 	])
 
 	const [isStreaming, setIsStreaming] = useState(false)
+	const [isDisabled, setIsDisabled] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 
 	const chatContainerRef = useRef<HTMLDivElement>(null)
@@ -70,6 +71,12 @@ const AIChatInterface = () => {
 				class:
 					'flex flex-col text-start overflow-y-auto max-h-[200px] min-h-[25px] w-full text-md placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
 			},
+		},
+		onUpdate: ({ editor }) => {
+			const content = editor.getText()
+			if (content.length > 1) {
+				setIsDisabled(false)
+			} else setIsDisabled(true)
 		},
 	})
 
@@ -205,20 +212,22 @@ const AIChatInterface = () => {
 				`}</style>
 
 				<div className='flex justify-end items-center gap-2 z-50'>
-					<Button
-						type='button'
-						size='icon'
-						variant='ghost'
-						className='border border-input'
-						onClick={() => editor?.commands.clearContent()}
-					>
-						<RotateCcw className='size-4' />
-					</Button>
+					{!isDisabled && (
+						<Button
+							type='button'
+							size='icon'
+							variant='ghost'
+							className='border border-input'
+							onClick={() => editor?.commands.clearContent()}
+						>
+							<RotateCcw className='size-4' />
+						</Button>
+					)}
 
 					<Button
 						type='submit'
 						size='icon'
-						disabled={isStreaming || userMessagesCount === 5}
+						disabled={isStreaming || isDisabled || userMessagesCount === 5}
 					>
 						{isStreaming ? (
 							<Loader2 className='size-4 animate-spin' />
