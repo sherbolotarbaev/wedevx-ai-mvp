@@ -73,10 +73,8 @@ const AIChatInterface = () => {
 			},
 		},
 		onUpdate: ({ editor }) => {
-			const content = editor.getText()
-			if (content.length > 1) {
-				setIsDisabled(false)
-			} else setIsDisabled(true)
+			const content = editor.getText().trim()
+			setIsDisabled(content.length === 0)
 		},
 	})
 
@@ -134,7 +132,6 @@ const AIChatInterface = () => {
 			)
 		} finally {
 			setIsStreaming(false)
-			setIsDisabled(false)
 		}
 	}
 
