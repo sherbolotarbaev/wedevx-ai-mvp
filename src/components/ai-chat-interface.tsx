@@ -160,7 +160,7 @@ const AIChatInterface = () => {
 						)}
 						<div
 							className={cn(
-								'rounded-xl text-wrap max-w-[92.5%]',
+								'rounded-xl max-w-[92.5%]',
 								message.role === 'user' &&
 									'px-3 py-2 bg-muted/30 border border-muted'
 							)}
@@ -182,7 +182,10 @@ const AIChatInterface = () => {
 				))}
 			</div>
 
-			<form onSubmit={handleSubmit} className='bg-muted px-3 py-2 rounded-xl'>
+			<form
+				onSubmit={handleSubmit}
+				className='bg-muted/20 border border-input px-3 py-2 rounded-xl'
+			>
 				<div className='flex justify-between items-center mb-2 text-xs text-muted-foreground'>
 					<span>{userMessagesCount}/5</span>
 					<span>Free</span>
@@ -205,7 +208,7 @@ const AIChatInterface = () => {
 						type='button'
 						size='icon'
 						variant='ghost'
-						className='bg-primary-foreground hover:bg-primary-foreground/50'
+						className='border border-input'
 						onClick={() => editor?.commands.clearContent()}
 					>
 						<RotateCcw className='size-4' />

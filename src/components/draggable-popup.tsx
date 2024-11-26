@@ -12,7 +12,7 @@ interface DraggablePopupProps {
 	children: React.ReactNode
 }
 
-const AdaptiveDraggablePopup: React.FC<DraggablePopupProps> = ({
+const DraggablePopup: React.FC<DraggablePopupProps> = ({
 	trigger,
 	children,
 }) => {
@@ -111,7 +111,7 @@ const AdaptiveDraggablePopup: React.FC<DraggablePopupProps> = ({
 				width: fullScreen ? '100%' : '550px',
 				height: fullScreen ? '100%' : 'auto',
 				maxWidth: fullScreen ? '100%' : '550px',
-				zIndex: 1000,
+				zIndex: 100,
 			}}
 			className={cn(
 				'shadow-md border border-input bg-primary-foreground/50 backdrop-blur-sm rounded-xl',
@@ -143,7 +143,7 @@ const AdaptiveDraggablePopup: React.FC<DraggablePopupProps> = ({
 			<CardContent
 				className={cn(
 					'px-3 py-2 max-w-full overflow-y-auto rounded-xl flex flex-col h-[600px] max-h-[600px]',
-					fullScreen && 'h-full max-h-full'
+					fullScreen && 'h-full max-h-full max-w-[900px] m-auto'
 				)}
 			>
 				{children}
@@ -152,4 +152,4 @@ const AdaptiveDraggablePopup: React.FC<DraggablePopupProps> = ({
 	)
 }
 
-export default AdaptiveDraggablePopup
+export default DraggablePopup
