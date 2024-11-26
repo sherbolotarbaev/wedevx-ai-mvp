@@ -1,66 +1,101 @@
 'use client'
 
-import { X } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from 'ui/card'
+
+import { cn } from 'utils'
+
+import { Maximize, X } from 'lucide-react'
 
 interface DraggablePopupProps {
 	trigger: React.ReactNode
 	children: React.ReactNode
 }
 
-const DraggablePopup: React.FC<DraggablePopupProps> = ({
+const AdaptiveDraggablePopup: React.FC<DraggablePopupProps> = ({
 	trigger,
 	children,
 }) => {
 	const [isOpen, setIsOpen] = useState(false)
 	const [position, setPosition] = useState({ x: 0, y: 0 })
 	const dragRef = useRef<HTMLDivElement>(null)
+	const [fullScreen, setFullScreen] = useState(false)
+	const [isMobile, setIsMobile] = useState(false)
+
+	useEffect(() => {
+		const checkMobile = () => {
+			setIsMobile(window.innerWidth < 768)
+			if (!isMobile) {
+				setFullScreen(window.innerWidth < 768)
+			}
+		}
+		checkMobile()
+		window.addEventListener('resize', checkMobile)
+		return () => window.removeEventListener('resize', checkMobile)
+	}, [])
 
 	useEffect(() => {
 		if (isOpen && dragRef.current) {
 			const { innerWidth, innerHeight } = window
 			const rect = dragRef.current.getBoundingClientRect()
 			setPosition({
-				x: (innerWidth - rect.width) / 2,
-				y: (innerHeight - rect.height) / 2,
+				x: fullScreen ? 0 : (innerWidth - rect.width) / 2,
+				y: fullScreen ? 0 : (innerHeight - rect.height) / 2,
 			})
 		}
-	}, [isOpen])
+	}, [isOpen, fullScreen])
 
-	const handleDragStart = useCallback((e: React.MouseEvent) => {
-		const target = dragRef.current
-		if (!target) return
+	const handleDragStart = useCallback(
+		(e: React.MouseEvent | React.TouchEvent) => {
+			const target = dragRef.current
+			if (!target) return
 
-		const rect = target.getBoundingClientRect()
-		const offsetX = e.clientX - rect.left
-		const offsetY = e.clientY - rect.top
+			const rect = target.getBoundingClientRect()
+			const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+			const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+			const offsetX = clientX - rect.left
+			const offsetY = clientY - rect.top
 
-		const handleDrag = (moveEvent: MouseEvent) => {
-			const { innerWidth, innerHeight } = window
-			const popupWidth = rect.width
-			const popupHeight = rect.height
+			const handleDrag = (moveEvent: MouseEvent | TouchEvent) => {
+				const { innerWidth, innerHeight } = window
+				const popupWidth = rect.width
+				const popupHeight = rect.height
 
-			const newX = Math.min(
-				Math.max(moveEvent.clientX - offsetX, 0),
-				innerWidth - popupWidth
-			)
-			const newY = Math.min(
-				Math.max(moveEvent.clientY - offsetY, 0),
-				innerHeight - popupHeight
-			)
+				const moveClientX =
+					'touches' in moveEvent
+						? moveEvent.touches[0].clientX
+						: moveEvent.clientX
+				const moveClientY =
+					'touches' in moveEvent
+						? moveEvent.touches[0].clientY
+						: moveEvent.clientY
 
-			setPosition({ x: newX, y: newY })
-		}
+				const newX = Math.min(
+					Math.max(moveClientX - offsetX, 0),
+					innerWidth - popupWidth
+				)
+				const newY = Math.min(
+					Math.max(moveClientY - offsetY, 0),
+					innerHeight - popupHeight
+				)
 
-		const handleDragEnd = () => {
-			document.removeEventListener('mousemove', handleDrag)
-			document.removeEventListener('mouseup', handleDragEnd)
-		}
+				setPosition({ x: newX, y: newY })
+			}
 
-		document.addEventListener('mousemove', handleDrag)
-		document.addEventListener('mouseup', handleDragEnd)
-	}, [])
+			const handleDragEnd = () => {
+				document.removeEventListener('mousemove', handleDrag)
+				document.removeEventListener('touchmove', handleDrag)
+				document.removeEventListener('mouseup', handleDragEnd)
+				document.removeEventListener('touchend', handleDragEnd)
+			}
+
+			document.addEventListener('mousemove', handleDrag)
+			document.addEventListener('touchmove', handleDrag)
+			document.addEventListener('mouseup', handleDragEnd)
+			document.addEventListener('touchend', handleDragEnd)
+		},
+		[]
+	)
 
 	if (!isOpen) {
 		return <div onClick={() => setIsOpen(true)}>{trigger}</div>
@@ -71,32 +106,50 @@ const DraggablePopup: React.FC<DraggablePopupProps> = ({
 			ref={dragRef}
 			style={{
 				position: 'fixed',
-				left: `${position.x}px`,
-				top: `${position.y}px`,
-				width: '550px',
-				maxWidth: '550px',
+				left: fullScreen ? '0' : `${position.x}px`,
+				top: fullScreen ? '0' : `${position.y}px`,
+				width: fullScreen ? '100%' : '550px',
+				height: fullScreen ? '100%' : 'auto',
+				maxWidth: fullScreen ? '100%' : '550px',
 				zIndex: 1000,
 			}}
-			className='shadow-md border border-input bg-primary-foreground/50 backdrop-blur-sm rounded-xl'
+			className={cn(
+				'shadow-md border border-input bg-primary-foreground/50 backdrop-blur-sm rounded-xl',
+				fullScreen && 'rounded-none'
+			)}
 		>
 			<CardHeader
-				className='cursor-move pt-2 pb-0 px-2'
+				className={cn('cursor-move pt-2 pb-0 px-2', fullScreen && 'touch-none')}
 				onMouseDown={handleDragStart}
+				onTouchStart={handleDragStart}
 			>
-				<CardTitle className='flex justify-end items-center'>
+				<CardTitle className='flex justify-end items-center gap-2'>
+					{!isMobile && (
+						<Maximize
+							onClick={() => setFullScreen(!fullScreen)}
+							size={15}
+							className='cursor-pointer text-muted-foreground hover:text-primary'
+						/>
+					)}
+
 					<X
 						onClick={() => setIsOpen(false)}
 						size={18}
-						className='cursor-pointer'
+						className='cursor-pointer text-muted-foreground hover:text-primary'
 					/>
 				</CardTitle>
 			</CardHeader>
 
-			<CardContent className='px-3 py-2 max-w-full h-[600px] max-h-[600px] overflow-y-auto flex flex-col'>
+			<CardContent
+				className={cn(
+					'px-3 py-2 max-w-full overflow-y-auto rounded-xl flex flex-col h-[600px] max-h-[600px]',
+					fullScreen && 'h-full max-h-full'
+				)}
+			>
 				{children}
 			</CardContent>
 		</Card>
 	)
 }
 
-export default DraggablePopup
+export default AdaptiveDraggablePopup

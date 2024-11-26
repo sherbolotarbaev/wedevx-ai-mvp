@@ -151,7 +151,7 @@ const AIChatInterface = () => {
 						{message.role === 'assistant' && (
 							<div
 								className={cn(
-									'size-8 rounded-full bg-gradient flex items-center justify-center',
+									'size-7 min-w-7 rounded-full bg-gradient flex items-center justify-center',
 									isStreaming && 'gradient-animate'
 								)}
 							>
@@ -160,7 +160,7 @@ const AIChatInterface = () => {
 						)}
 						<div
 							className={cn(
-								'rounded-xl max-w-[92.5%]',
+								'rounded-xl text-wrap max-w-[92.5%]',
 								message.role === 'user' &&
 									'px-3 py-2 bg-muted/30 border border-muted'
 							)}
@@ -168,7 +168,7 @@ const AIChatInterface = () => {
 							<MDXContent content={message.content} />
 						</div>
 						{message.role === 'user' && (
-							<div className='size-8 rounded-full overflow-hidden bg-secondary border border-input flex items-center justify-center'>
+							<div className='size-7 min-w-7 rounded-full overflow-hidden bg-secondary border border-input flex items-center justify-center'>
 								<Image
 									src='https://www.sherbolotarbaev.co/images/sher.png'
 									alt='User'

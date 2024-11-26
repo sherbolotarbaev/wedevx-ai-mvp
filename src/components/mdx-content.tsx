@@ -16,7 +16,7 @@ const MDXContent: React.FC<MDXContentProps> = ({ content }) => {
 		<ReactMarkdown
 			remarkPlugins={[remarkGfm]}
 			rehypePlugins={[rehypeRaw]}
-			className='text-md flex flex-col gap-2'
+			className='text-md flex flex-col gap-2.5'
 			components={{
 				code({ node, inline, className, children, ...props }: any) {
 					const match = /language-(\w+)/.exec(className || '')
@@ -49,7 +49,11 @@ const MDXContent: React.FC<MDXContentProps> = ({ content }) => {
 				h3: ({ children }) => (
 					<h3 className='text-lg font-medium mb-1'>{children}</h3>
 				),
-				p: ({ children }) => <p className='leading-relaxed'>{children}</p>,
+				p: ({ children }) => (
+					<p className='leading-relaxed break-words whitespace-pre-wrap w-full'>
+						{children}
+					</p>
+				),
 				ul: ({ children }) => (
 					<ul className='list-disc pl-6 mb-2'>{children}</ul>
 				),
