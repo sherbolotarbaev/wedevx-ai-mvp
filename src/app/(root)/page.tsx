@@ -9,7 +9,9 @@ export default function AIStreamPage() {
 			<ModeToggle />
 
 			<DraggablePopup
-				trigger={<Button className='bg-gradient text-white'>AI</Button>}
+				trigger={
+					<Button className='bg-gradient text-white mt-2'>AI Assistant</Button>
+				}
 			>
 				<AIChatInterface />
 			</DraggablePopup>

@@ -142,7 +142,7 @@ const DraggablePopup: React.FC<DraggablePopupProps> = ({
 
 			<CardContent
 				className={cn(
-					'px-3 py-2 max-w-full overflow-y-auto rounded-xl flex flex-col h-[600px] max-h-[600px]',
+					'px-3 py-2 max-w-full rounded-xl flex flex-col h-[600px] max-h-[600px]',
 					fullScreen && 'h-full max-h-full max-w-[900px] m-auto'
 				)}
 			>

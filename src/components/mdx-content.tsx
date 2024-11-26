@@ -3,7 +3,7 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { coldarkDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { oneDark as codeTheme } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 
@@ -22,11 +22,19 @@ const MDXContent: React.FC<MDXContentProps> = ({ content }) => {
 					const match = /language-(\w+)/.exec(className || '')
 					return !inline && match ? (
 						<SyntaxHighlighter
-							style={coldarkDark}
+							style={codeTheme}
 							language={match[1]}
-							PreTag='div'
-							className='text-sm rounded-xl'
+							PreTag='pre'
 							showLineNumbers
+							customStyle={{
+								margin: 0,
+								width: 'auto',
+								minWidth: '100%',
+								maxWidth: '200px',
+								borderRadius: '0.75rem',
+								fontSize: '0.875rem',
+								lineHeight: '1.25rem',
+							}}
 							{...props}
 						>
 							{String(children).replace(/\n$/, '')}
