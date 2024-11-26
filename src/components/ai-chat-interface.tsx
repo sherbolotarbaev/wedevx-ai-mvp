@@ -3,6 +3,7 @@
 import MDXContent from 'components/mdx-content'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
+import BorderBeam from 'shared/ui/border-beam'
 import { Button } from 'ui/button'
 
 import Placeholder from '@tiptap/extension-placeholder'
@@ -184,7 +185,7 @@ const AIChatInterface = () => {
 
 			<form
 				onSubmit={handleSubmit}
-				className='bg-muted/20 border border-input px-3 py-2 rounded-xl'
+				className='bg-muted/20 border border-input px-3 py-2 rounded-xl relative'
 			>
 				<div className='flex justify-between items-center mb-2 text-xs text-muted-foreground'>
 					<span>{userMessagesCount}/5</span>
@@ -203,7 +204,7 @@ const AIChatInterface = () => {
 					}
 				`}</style>
 
-				<div className='flex justify-end items-center gap-2'>
+				<div className='flex justify-end items-center gap-2 z-50'>
 					<Button
 						type='button'
 						size='icon'
@@ -226,6 +227,8 @@ const AIChatInterface = () => {
 						)}
 					</Button>
 				</div>
+
+				<BorderBeam size={150} duration={10} />
 			</form>
 
 			{error && (
