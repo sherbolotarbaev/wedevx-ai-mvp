@@ -87,6 +87,7 @@ const AIChatInterface = () => {
 		const content = editor?.getText() || ''
 		if (!content.trim()) return
 
+		setIsDisabled(true)
 		setIsStreaming(true)
 		setError(null)
 
@@ -133,6 +134,7 @@ const AIChatInterface = () => {
 			)
 		} finally {
 			setIsStreaming(false)
+			setIsDisabled(false)
 		}
 	}
 
@@ -212,7 +214,7 @@ const AIChatInterface = () => {
 				`}</style>
 
 				<div className='flex justify-end items-center gap-2 z-50'>
-					{!isDisabled && (
+					{!isDisabled && isStreaming && (
 						<Button
 							type='button'
 							size='icon'
