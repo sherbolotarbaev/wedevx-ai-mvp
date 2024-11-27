@@ -184,7 +184,7 @@ const AIChatInterface = () => {
 				className='bg-muted/20 border border-input px-3 py-2 rounded-2xl relative'
 			>
 				{isUserScrolling && (
-					<div className='absolute rounded-b-2xl -top-10 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none'></div>
+					<div className='absolute rounded-b-2xl -top-10 left-0 right-0 h-8 bg-gradient-to-t from-background/90 to-transparent pointer-events-none'></div>
 				)}
 
 				<AnimatePresence>
