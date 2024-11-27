@@ -217,7 +217,10 @@ const AIChatInterface = () => {
 							size='icon'
 							variant='ghost'
 							className='border border-input'
-							onClick={() => editor?.commands.clearContent()}
+							onClick={() => {
+								editor?.commands.clearContent()
+								setIsDisabled(true)
+							}}
 						>
 							<RotateCcw className='size-4' />
 						</Button>
