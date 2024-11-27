@@ -36,7 +36,7 @@ const MDXContent: React.FC<MDXContentProps> = ({ content }) => {
 
 					return !inline && match ? (
 						<div className='relative'>
-							<div className='flex justify-between items-center bg-muted px-4 py-2 rounded-t-lg'>
+							<div className='flex justify-between items-center bg-muted/20 border-t border-l border-r border-input px-4 py-2 rounded-t-2xl'>
 								<span className='text-sm font-medium text-muted-foreground'>
 									{language}
 								</span>
@@ -76,8 +76,8 @@ const MDXContent: React.FC<MDXContentProps> = ({ content }) => {
 									maxWidth: '200px',
 									borderTopLeftRadius: 0,
 									borderTopRightRadius: 0,
-									borderBottomLeftRadius: '0.75rem',
-									borderBottomRightRadius: '0.75rem',
+									borderBottomLeftRadius: '1rem',
+									borderBottomRightRadius: '1rem',
 									fontSize: '0.875rem',
 									lineHeight: '1.25rem',
 								}}

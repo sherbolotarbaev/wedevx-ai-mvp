@@ -10,7 +10,9 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { EditorContent, Extension, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 
-import { ArrowUp, Loader2, RotateCcw, Stars } from 'lucide-react'
+import { ArrowDown, ArrowUp, Loader2, RotateCcw, Stars } from 'lucide-react'
+
+import { AnimatePresence, motion } from 'framer-motion'
 
 import { cn } from 'utils'
 
@@ -51,6 +53,7 @@ const AIChatInterface = () => {
 
 	const [isStreaming, setIsStreaming] = useState(false)
 	const [isDisabled, setIsDisabled] = useState(true)
+	const [isUserScrolling, setIsUserScrolling] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
 	const chatContainerRef = useRef<HTMLDivElement>(null)
@@ -136,63 +139,75 @@ const AIChatInterface = () => {
 	}
 
 	useEffect(() => {
+		const chatContainer = chatContainerRef.current
+		if (!chatContainer) return
+
+		const handleScroll = () => {
+			const { scrollTop, scrollHeight, clientHeight } = chatContainer
+			const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10 // 10px threshold
+
+			setIsUserScrolling(!isAtBottom)
+		}
+
+		chatContainer.addEventListener('scroll', handleScroll)
+
+		return () => {
+			chatContainer.removeEventListener('scroll', handleScroll)
+		}
+	}, [])
+
+	useEffect(() => {
+		if (chatContainerRef.current && !isUserScrolling) {
+			chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+		}
+	}, [messages, isUserScrolling])
+
+	const scrollToBottom = () => {
 		if (chatContainerRef.current) {
 			chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
 		}
-	}, [messages])
+	}
 
 	return (
 		<>
 			<div
 				ref={chatContainerRef}
-				className='flex-grow overflow-y-auto space-y-4 rounded-xl mb-2'
+				className='flex-grow overflow-y-auto space-y-6 rounded-2xl mb-2'
 			>
 				{messages.map((message, index) => (
-					<div
-						key={index}
-						className={cn(
-							'flex items-start gap-2',
-							message.role === 'user' ? 'justify-end' : 'justify-start'
-						)}
-					>
-						{message.role === 'assistant' && (
-							<div
-								className={cn(
-									'size-7 min-w-7 rounded-full bg-gradient flex items-center justify-center',
-									isStreaming && 'gradient-animate'
-								)}
-							>
-								<Stars className='size-4 text-white' />
-							</div>
-						)}
-						<div
-							className={cn(
-								'rounded-xl max-w-[92.5%]',
-								message.role === 'user' &&
-									'px-3 py-2 bg-muted/30 border border-muted'
-							)}
-						>
-							<MDXContent content={message.content} />
-						</div>
-						{message.role === 'user' && (
-							<div className='size-7 min-w-7 rounded-full overflow-hidden bg-secondary border border-input flex items-center justify-center'>
-								<Image
-									src='https://www.sherbolotarbaev.co/images/sher.png'
-									alt='User'
-									width={1000}
-									height={1000}
-									className='w-fit'
-								/>
-							</div>
-						)}
-					</div>
+					<ChatMessage key={index} {...message} isStreaming={isStreaming} />
 				))}
 			</div>
 
 			<form
 				onSubmit={handleSubmit}
-				className='bg-muted/20 border border-input px-3 py-2 rounded-xl relative'
+				className='bg-muted/20 border border-input px-3 py-2 rounded-2xl relative'
 			>
+				{isUserScrolling && (
+					<div className='absolute rounded-b-2xl -top-10 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none'></div>
+				)}
+
+				<AnimatePresence>
+					{isUserScrolling && (
+						<motion.div
+							initial={{ opacity: 0, y: 10 }}
+							animate={{ opacity: 1, y: 0 }}
+							exit={{ opacity: 0, y: 10 }}
+							transition={{ duration: 0.2 }}
+							className='absolute -top-14 right-[50%]'
+						>
+							<Button
+								onClick={scrollToBottom}
+								size='icon'
+								variant='secondary'
+								className='rounded-full shadow-lg bg-secondary/90 backdrop-blur-sm'
+							>
+								<ArrowDown className='size-4' />
+							</Button>
+						</motion.div>
+					)}
+				</AnimatePresence>
+
 				<div className='flex justify-between items-center mb-2 text-xs text-muted-foreground'>
 					<span>{userMessagesCount}/5</span>
 					<span>Free</span>
@@ -214,27 +229,28 @@ const AIChatInterface = () => {
 					{!isDisabled && !isStreaming && (
 						<Button
 							type='button'
-							size='icon'
 							variant='ghost'
-							className='border border-input'
+							size='icon'
+							className='rounded-full'
 							onClick={() => {
 								editor?.commands.clearContent()
 								setIsDisabled(true)
 							}}
 						>
-							<RotateCcw className='size-4' />
+							<RotateCcw className='size-9' />
 						</Button>
 					)}
 
 					<Button
 						type='submit'
 						size='icon'
+						className='rounded-full'
 						disabled={isStreaming || isDisabled || userMessagesCount === 5}
 					>
 						{isStreaming ? (
-							<Loader2 className='size-4 animate-spin' />
+							<Loader2 className='size-9 animate-spin' />
 						) : (
-							<ArrowUp className='size-4' />
+							<ArrowUp className='size-9' />
 						)}
 					</Button>
 				</div>
@@ -245,12 +261,73 @@ const AIChatInterface = () => {
 			{error && (
 				<p className='text-sm text-center text-red-500 mt-2'>{error}</p>
 			)}
-			<p className='text-xs text-center text-muted-foreground mt-2'>
-				<span className='text-gradient'>WEDEVX AI</span> may make mistakes.
-				Please use with discretion.
-			</p>
+
+			<FYI />
 		</>
 	)
 }
 
 export default AIChatInterface
+
+const ChatMessage: React.FC<
+	TChatMessage & {
+		isStreaming: boolean
+	}
+> = ({ role, content }, { isStreaming }) => {
+	const isUser = role === 'user'
+
+	return (
+		<motion.div
+			initial={{ opacity: 0, y: 20 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ duration: 0.3 }}
+			className={cn(
+				'flex items-start gap-2',
+				isUser ? 'justify-end' : 'justify-start'
+			)}
+		>
+			{!isUser && (
+				<div className='size-7 min-w-7 rounded-full bg-gradient flex items-center justify-center'>
+					<Stars className='size-4 text-white' />
+				</div>
+			)}
+
+			<motion.div
+				initial={isStreaming ? { opacity: 0, y: 10 } : false}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.3 }}
+				className={cn(
+					'max-w-[92.5%]',
+					isUser && 'px-3 py-2 bg-muted/30 border border-muted rounded-2xl'
+				)}
+			>
+				{isUser ? (
+					<p className='text-md leading-relaxed break-words whitespace-pre-wrap w-full'>
+						{content}
+					</p>
+				) : (
+					<MDXContent content={content} />
+				)}
+			</motion.div>
+
+			{isUser && (
+				<div className='size-7 min-w-7 rounded-full overflow-hidden bg-secondary border border-input flex items-center justify-center'>
+					<Image
+						src='https://www.sherbolotarbaev.co/images/sher.png'
+						alt='User'
+						width={1000}
+						height={1000}
+						className='w-fit'
+					/>
+				</div>
+			)}
+		</motion.div>
+	)
+}
+
+const FYI = () => (
+	<p className='text-xs text-center text-muted-foreground mt-2'>
+		<span className='text-gradient'>WEDEVX AI</span> may make mistakes. Please
+		use with discretion.
+	</p>
+)
