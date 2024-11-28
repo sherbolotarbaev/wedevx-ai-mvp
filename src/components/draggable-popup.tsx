@@ -120,7 +120,7 @@ const DraggablePopup: React.FC<DraggablePopupProps> = ({
 				zIndex: 1000,
 			}}
 			className={cn(
-				'shadow-md border border-input bg-background/50 backdrop-blur-sm rounded-2xl',
+				'shadow-md border border-input bg-background/70 backdrop-blur-sm rounded-2xl',
 				fullScreen && 'rounded-none'
 			)}
 		>
