@@ -1,8 +1,7 @@
 'use client'
 
 import MDXContent from 'components/mdx-content'
-import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import BorderBeam from 'shared/ui/border-beam'
 import { Button } from 'ui/button'
 
@@ -42,21 +41,34 @@ const PreventEmptyParagraphs = Extension.create({
 
 type TChatMessage = { role: 'user' | 'assistant'; content: string }
 
-const AIChatInterface = () => {
+interface AIChatInterfaceProps {
+	me:
+		| {
+				user: User
+		  }
+		| undefined
+	session: string
+}
+
+const AIChatInterface: React.FC<AIChatInterfaceProps> = ({ me, session }) => {
 	const [messages, setMessages] = useState<TChatMessage[]>([
 		{
 			role: 'assistant',
 			content:
-				"## Hey there 👋\nI'm your AI mentor. How can I help you?\n\nYou don't need to copy/paste your exercise requirements or code here. I'm already aware of what you are working on. Feel free to start conversation straight away.",
+				`## Hey ${me?.user.firstName || 'there'} 👋\n` +
+				"_I'm your AI mentor. How can I help you?_\n" +
+				'\n' +
+				"_You don't need to copy/paste your exercise requirements or code here. I'm already aware of what you are working on. Feel free to start conversation straight away._",
 		},
 	])
 
+	const [isLoading, setIsLoading] = useState(false)
 	const [isStreaming, setIsStreaming] = useState(false)
 	const [isDisabled, setIsDisabled] = useState(true)
 	const [isUserScrolling, setIsUserScrolling] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
-	const chatContainerRef = useRef<HTMLDivElement>(null)
+	const parentRef = useRef<HTMLDivElement>(null)
 
 	const editor = useEditor({
 		autofocus: true,
@@ -83,101 +95,141 @@ const AIChatInterface = () => {
 
 	let userMessagesCount = messages.filter(({ role }) => role === 'user').length
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault()
-		const content = editor?.getText() || ''
-		if (!content.trim()) return
+	const handleSubmit = useCallback(
+		async (e: React.FormEvent) => {
+			e.preventDefault()
+			const content = editor?.getText() || ''
+			if (!content.trim()) return
 
-		setIsDisabled(true)
-		setIsStreaming(true)
-		setError(null)
+			const exerciseId = localStorage.getItem('exerciseId')
+			if (!exerciseId) return
 
-		const updatedMessages: TChatMessage[] = [
-			...messages,
-			{ role: 'user', content },
-		]
-		setMessages(updatedMessages)
-		editor?.commands.setContent('')
+			const studentCode = localStorage.getItem('studentCode')
+			if (!studentCode) return
 
-		try {
-			const res = await fetch(`${API_URL}/ai`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					messages: updatedMessages,
-				}),
-			})
+			setIsDisabled(true)
+			setIsLoading(true)
+			setError(null)
 
-			if (!res.ok) {
-				throw new Error(`HTTP error! status: ${res.status}`)
+			const updatedMessages: TChatMessage[] = [
+				...messages,
+				{ role: 'user', content },
+			]
+			setMessages(updatedMessages)
+			editor?.commands.setContent('')
+
+			try {
+				const res = await fetch(`${API_URL}/ai/${exerciseId}`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: session as string,
+					},
+					body: JSON.stringify({
+						studentCode,
+						messages: updatedMessages,
+					}),
+				})
+
+				if (!res.ok) {
+					throw {
+						error: res.statusText,
+						statusCode: res.status,
+					}
+				}
+
+				const reader = res.body?.getReader()
+				if (!reader) throw new Error('No reader available')
+
+				setIsLoading(false)
+				setIsStreaming(true)
+
+				let aiResponse = ''
+				setMessages(prev => [...prev, { role: 'assistant', content: '' }])
+
+				while (true) {
+					const { done, value } = await reader.read()
+					if (done) break
+					const chunk = new TextDecoder().decode(value)
+					aiResponse += chunk
+					setMessages(prev => [
+						...prev.slice(0, -1),
+						{ role: 'assistant', content: aiResponse },
+					])
+				}
+			} catch (error: any) {
+				console.error('ERROR:', error)
+				if (error.statusCode === 401) {
+					setError(
+						'Unauthorized. Please ensure that your session is saved in the cookies and try again.'
+					)
+				} else
+					setError(
+						`An error occurred while processing your request. Please try again. Error code: ${error.statusCode}.`
+					)
+			} finally {
+				setIsStreaming(false)
+				setIsLoading(false)
 			}
-
-			const reader = res.body?.getReader()
-			if (!reader) throw new Error('No reader available')
-
-			let aiResponse = ''
-			setMessages(prev => [...prev, { role: 'assistant', content: '' }])
-
-			while (true) {
-				const { done, value } = await reader.read()
-				if (done) break
-				const chunk = new TextDecoder().decode(value)
-				aiResponse += chunk
-				setMessages(prev => [
-					...prev.slice(0, -1),
-					{ role: 'assistant', content: aiResponse },
-				])
-			}
-		} catch (error) {
-			console.error('Error:', error)
-			setError(
-				'An error occurred while processing your request. Please try again.'
-			)
-		} finally {
-			setIsStreaming(false)
-		}
-	}
+		},
+		[messages, editor]
+	)
 
 	useEffect(() => {
-		const chatContainer = chatContainerRef.current
-		if (!chatContainer) return
+		const parentContainer = parentRef.current
+		if (!parentContainer) return
 
 		const handleScroll = () => {
-			const { scrollTop, scrollHeight, clientHeight } = chatContainer
+			const { scrollTop, scrollHeight, clientHeight } = parentContainer
 			const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10 // 10px threshold
 
 			setIsUserScrolling(!isAtBottom)
 		}
 
-		chatContainer.addEventListener('scroll', handleScroll)
+		parentContainer.addEventListener('scroll', handleScroll)
 
 		return () => {
-			chatContainer.removeEventListener('scroll', handleScroll)
+			parentContainer.removeEventListener('scroll', handleScroll)
 		}
 	}, [])
 
 	useEffect(() => {
-		if (chatContainerRef.current && !isUserScrolling) {
-			chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+		if (parentRef.current && !isUserScrolling) {
+			parentRef.current.scrollTop = parentRef.current.scrollHeight
 		}
 	}, [messages, isUserScrolling])
 
-	const scrollToBottom = () => {
-		if (chatContainerRef.current) {
-			chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+	const scrollToBottom = useCallback(() => {
+		if (parentRef.current) {
+			parentRef.current.scrollTop = parentRef.current.scrollHeight
 		}
-	}
+	}, [])
 
 	return (
 		<>
 			<div
-				ref={chatContainerRef}
+				ref={parentRef}
 				className='flex-grow overflow-y-auto space-y-6 rounded-2xl mb-2'
 			>
 				{messages.map((message, index) => (
 					<ChatMessage key={index} {...message} isStreaming={isStreaming} />
 				))}
+				{isLoading && (
+					<div className='flex items-center gap-2'>
+						<div className='size-7 min-w-7 rounded-full bg-gradient gradient-animate flex items-center justify-center'>
+							<Stars className='size-4 text-white' />
+						</div>
+
+						<p className='text-gradient gradient-animate animate-pulse'>
+							is thinking...
+						</p>
+					</div>
+				)}
 			</div>
+
+			{error && (
+				<p className='text-sm text-center text-red-500 my-4'>{error}</p>
+			)}
 
 			<form
 				onSubmit={handleSubmit}
@@ -247,7 +299,7 @@ const AIChatInterface = () => {
 						className='rounded-full'
 						disabled={isStreaming || isDisabled || userMessagesCount === 5}
 					>
-						{isStreaming ? (
+						{isLoading || isStreaming ? (
 							<Loader2 className='size-9 animate-spin' />
 						) : (
 							<ArrowUp className='size-9' />
@@ -257,10 +309,6 @@ const AIChatInterface = () => {
 
 				<BorderBeam size={150} duration={10} />
 			</form>
-
-			{error && (
-				<p className='text-sm text-center text-red-500 mt-2'>{error}</p>
-			)}
 
 			<FYI />
 		</>
@@ -310,7 +358,7 @@ const ChatMessage: React.FC<
 				)}
 			</motion.div>
 
-			{isUser && (
+			{/* {isUser && (
 				<div className='size-7 min-w-7 rounded-full overflow-hidden bg-secondary border border-input flex items-center justify-center'>
 					<Image
 						src='https://www.sherbolotarbaev.co/images/sher.png'
@@ -320,7 +368,7 @@ const ChatMessage: React.FC<
 						className='w-fit'
 					/>
 				</div>
-			)}
+			)} */}
 		</motion.div>
 	)
 }

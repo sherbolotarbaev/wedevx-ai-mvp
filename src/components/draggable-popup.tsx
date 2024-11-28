@@ -22,19 +22,21 @@ const DraggablePopup: React.FC<DraggablePopupProps> = ({
 	const [fullScreen, setFullScreen] = useState(false)
 	const [isMobile, setIsMobile] = useState(false)
 
-	useEffect(() => {
-		const checkMobile = () => {
-			setIsMobile(window.innerWidth < 768)
-			if (!isMobile) {
-				setFullScreen(window.innerWidth < 768)
-			}
+	const checkMobile = useCallback(() => {
+		const isMobileView = window.innerWidth < 768
+		setIsMobile(isMobileView)
+		if (!isMobile) {
+			setFullScreen(isMobileView)
 		}
+	}, [isMobile])
+
+	useEffect(() => {
 		checkMobile()
 		window.addEventListener('resize', checkMobile)
 		return () => window.removeEventListener('resize', checkMobile)
 	}, [])
 
-	useEffect(() => {
+	const calculatePosition = useCallback(() => {
 		if (isOpen && dragRef.current) {
 			const { innerWidth, innerHeight } = window
 			const rect = dragRef.current.getBoundingClientRect()
@@ -44,6 +46,10 @@ const DraggablePopup: React.FC<DraggablePopupProps> = ({
 			})
 		}
 	}, [isOpen, fullScreen])
+
+	useEffect(() => {
+		calculatePosition()
+	}, [calculatePosition])
 
 	const handleDragStart = useCallback(
 		(e: React.MouseEvent | React.TouchEvent) => {
@@ -108,10 +114,10 @@ const DraggablePopup: React.FC<DraggablePopupProps> = ({
 				position: 'fixed',
 				left: fullScreen ? '0' : `${position.x}px`,
 				top: fullScreen ? '0' : `${position.y}px`,
-				width: fullScreen ? '100%' : '550px',
-				height: fullScreen ? '100%' : 'auto',
-				maxWidth: fullScreen ? '100%' : '550px',
-				zIndex: 100,
+				width: fullScreen ? '100vw' : '550px',
+				height: fullScreen ? '100vh' : 'auto',
+				maxWidth: fullScreen ? '100vw' : '550px',
+				zIndex: 1000,
 			}}
 			className={cn(
 				'shadow-md border border-input bg-background/50 backdrop-blur-sm rounded-2xl',
