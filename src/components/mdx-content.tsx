@@ -144,7 +144,7 @@ const MDXContent: React.FC<MDXContentProps> = ({ content }) => {
 				<td className='border border-border p-2'>{children}</td>
 			),
 		}),
-		[copyToClipboard]
+		[copyToClipboard, copiedCode]
 	)
 
 	const remarkPlugins = useMemo(() => [remarkGfm], [])
